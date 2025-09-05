@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>LanaT Project v.1.2 Beta</title>
+    <title>LanaT Project v.1.3 Beta</title>
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Google Fonts: Inter -->
@@ -20,7 +20,7 @@
         .main-menu-card {
             background-color: #1f2937; border: 1px solid #374151; border-radius: 12px;
             padding: 24px; text-align: center; cursor: pointer;
-            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            transition: transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease;
         }
         .main-menu-card:hover { transform: translateY(-5px); box-shadow: 0 10px 15px -3px rgba(59, 130, 246, 0.2); border-color: #3b82f6; }
         .main-menu-card svg { margin: 0 auto 16px auto; }
@@ -34,6 +34,9 @@
         }
         .btn:hover { transform: scale(1.05); box-shadow: 0 4px 20px rgba(99, 102, 241, 0.5); }
         .btn-secondary { background: #4b5563; }
+        .btn-danger { background: linear-gradient(to right, #ef4444, #dc2626); }
+        .btn-danger:hover { box-shadow: 0 4px 20px rgba(239, 68, 68, 0.5); }
+
 
         .input-field, .select-field {
             width: 100%; background-color: #374151; border: 1px solid #4b5563; color: #e5e7eb;
@@ -43,19 +46,21 @@
         textarea.input-field { min-height: 150px; resize: vertical; font-family: monospace; }
         
         #camera-fullscreen-container { background-color: #000; }
-        #camera-feed { width: 100%; height: 100%; object-fit: contain; }
+        #camera-feed { width: 100%; height: 100%; object-fit: contain; transform: scaleX(-1); /* FIX: Un-mirrors the camera */ }
         #camera-controls {
             position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%);
             background-color: rgba(0, 0, 0, 0.5); padding: 10px 20px; border-radius: 12px;
             display: flex; gap: 10px; z-index: 100;
         }
+        #sound-level-bar-container { background-color: #374151; border-radius: 8px; overflow: hidden; }
+        #sound-level-bar { height: 30px; background: linear-gradient(to right, #34d399, #fbbf24, #ef4444); transition: width 0.1s linear; }
     </style>
 </head>
 <body class="antialiased">
 
     <!-- Global Header -->
     <header class="text-center py-6 px-4 relative">
-        <div class="absolute top-4 right-4">
+        <div class="absolute top-4 right-4 z-10">
             <select id="language-selector" class="select-field w-auto text-sm">
                 <option value="id">Bahasa Indonesia</option>
                 <option value="zh">中文 (Chinese)</option>
@@ -63,7 +68,7 @@
             </select>
         </div>
         <h1 class="text-4xl md:text-5xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-indigo-500" data-lang-key="mainTitle">
-            LanaT Project v.1.2
+            LanaT Project v.1.3
         </h1>
         <p class="text-gray-400 mt-2" data-lang-key="subTitle">Beta Pretest - All-in-One Web Tools</p>
     </header>
@@ -74,6 +79,11 @@
         <!-- Page: Home/Main Menu -->
         <div id="page-home" class="page active">
             <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+                <!-- Sound Level Meter Card -->
+                <div class="main-menu-card" data-target-page="page-sound-meter">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" fill="currentColor" class="bi bi-mic text-blue-400" viewBox="0 0 16 16"><path d="M3.5 6.5A.5.5 0 0 1 4 7v1a4 4 0 0 0 8 0V7a.5.5 0 0 1 1 0v1a5 5 0 0 1-4.5 4.975V15h3a.5.5 0 0 1 0 1h-7a.5.5 0 0 1 0-1h3v-2.025A5 5 0 0 1 3 8V7a.5.5 0 0 1 .5-.5z"/><path d="M10 8a2 2 0 1 1-4 0V3a2 2 0 1 1 4 0v5zM8 0a3 3 0 0 0-3 3v5a3 3 0 0 0 6 0V3a3 3 0 0 0-3-3z"/></svg>
+                    <h3 class="text-xl font-semibold" data-lang-key="soundMeterTitle">Sound Level Meter</h3>
+                </div>
                 <!-- File Creator Card -->
                 <div class="main-menu-card" data-target-page="page-creator">
                     <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" fill="currentColor" class="bi bi-file-earmark-plus text-blue-400" viewBox="0 0 16 16"><path d="M8 6.5a.5.5 0 0 1 .5.5v1.5H10a.5.5 0 0 1 0 1H8.5V11a.5.5 0 0 1-1 0V9.5H6a.5.5 0 0 1 0-1h1.5V7a.5.5 0 0 1 .5-.5z"/><path d="M14 4.5V14a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V2a2 2 0 0 1 2-2h5.5L14 4.5zm-3 0A1.5 1.5 0 0 1 9.5 3V1H4a1 1 0 0 0-1 1v12a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1V4.5h-2z"/></svg>
@@ -102,6 +112,26 @@
             </div>
         </div>
 
+        <!-- Page: Sound Level Meter -->
+        <div id="page-sound-meter" class="page">
+            <div class="tool-container max-w-2xl mx-auto">
+                <button class="btn btn-secondary mb-6 back-button" data-lang-key="backButton">Kembali</button>
+                <h2 class="text-2xl font-semibold mb-4" data-lang-key="soundMeterTitle">Sound Level Meter</h2>
+                <p class="text-gray-400 mb-6" data-lang-key="soundMeterDesc">Izinkan akses mikrofon dan mulai monitoring untuk melihat level suara sekitar secara real-time.</p>
+                <div class="text-center mb-4">
+                    <p class="text-lg text-gray-400" data-lang-key="soundLevelLabel">Level Suara</p>
+                    <p id="sound-level-db" class="text-6xl font-bold text-white">0 dB</p>
+                </div>
+                <div id="sound-level-bar-container" class="mb-6">
+                    <div id="sound-level-bar" style="width: 0%;"></div>
+                </div>
+                <div class="flex justify-center gap-4">
+                    <button id="start-mic-btn" class="btn" data-lang-key="startMonitoring">Mulai Monitoring</button>
+                    <button id="stop-mic-btn" class="btn btn-danger hidden" data-lang-key="stopMonitoring">Hentikan Monitoring</button>
+                </div>
+            </div>
+        </div>
+
         <!-- Page: File Creator -->
         <div id="page-creator" class="page">
              <div class="tool-container max-w-4xl mx-auto">
@@ -124,7 +154,7 @@
                                  <option value=".html">.html</option>
                                  <option value=".js">.js</option>
                                  <option value=".svg">.svg</option>
-                                 <option value=".zip">.zip</option>
+                                 <option value=".txt">.txt</option>
                              </select>
                         </div>
                     </div>
@@ -154,13 +184,26 @@
             </div>
         </div>
 
-        <!-- Other Pages (Encoder, QR, Performance) would follow a similar structure -->
         <!-- Page: JS Encoder -->
         <div id="page-encoder" class="page">
             <div class="tool-container max-w-4xl mx-auto">
                  <button class="btn btn-secondary mb-6 back-button" data-lang-key="backButton">Kembali</button>
                  <h2 class="text-2xl font-semibold mb-4" data-lang-key="encoderTitle">JS Encoder</h2>
-                 <!-- ... content from previous version ... -->
+                 <p class="text-gray-400 mb-4" data-lang-key="encoderDesc">Ubah kode JavaScript Anda menjadi format yang sulit dibaca untuk proteksi sederhana.</p>
+                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label for="jsInput" class="block mb-2 font-medium text-gray-300" data-lang-key="inputCode">Kode Input:</label>
+                        <textarea id="jsInput" class="input-field" data-lang-key="inputPlaceholder" placeholder="// Paste your JavaScript code here..."></textarea>
+                    </div>
+                    <div>
+                        <label for="jsOutput" class="block mb-2 font-medium text-gray-300" data-lang-key="outputCode">Hasil Encode:</label>
+                        <textarea id="jsOutput" class="input-field" data-lang-key="outputPlaceholder" placeholder="// Encoded output will appear here..." readonly></textarea>
+                    </div>
+                </div>
+                <div class="mt-6 flex flex-wrap gap-4">
+                    <button id="encodeBtn" class="btn" data-lang-key="encodeButton">Convert to JS Encode</button>
+                    <button id="copyBtn" class="btn btn-secondary" data-lang-key="copyButton">Copy Result</button>
+                </div>
             </div>
         </div>
 
@@ -169,7 +212,14 @@
             <div class="tool-container max-w-md mx-auto">
                  <button class="btn btn-secondary mb-6 back-button" data-lang-key="backButton">Kembali</button>
                  <h2 class="text-2xl font-semibold mb-4" data-lang-key="qrTitle">QR Code Generator</h2>
-                 <!-- ... content from previous version ... -->
+                 <p class="text-gray-400 mb-4" data-lang-key="qrDesc">Buat kode QR dari teks atau URL situs web dengan mudah.</p>
+                 <div>
+                    <label for="qrInput" class="block mb-2 font-medium text-gray-300" data-lang-key="qrInputLabel">Teks atau URL:</label>
+                    <input type="text" id="qrInput" class="input-field" placeholder="https://google.com">
+                    <button id="generateQrBtn" class="btn mt-4 w-full" data-lang-key="qrGenerateButton">Generate QR</button>
+                </div>
+                <div id="qrcode-container" class="mt-4 flex justify-center items-center bg-white p-4 rounded-lg min-h-[200px] w-fit mx-auto"><p class="text-gray-500 text-sm" data-lang-key="qrPlaceholder">QR Code akan muncul di sini</p></div>
+                <button id="downloadQrBtn" class="btn mt-4 w-full hidden" style="background: #10b981;" data-lang-key="qrDownloadButton">Download QR</button>
             </div>
         </div>
 
@@ -178,7 +228,9 @@
             <div class="tool-container max-w-2xl mx-auto">
                  <button class="btn btn-secondary mb-6 back-button" data-lang-key="backButton">Kembali</button>
                  <h2 class="text-2xl font-semibold mb-4" data-lang-key="performanceTitle">Device & Performance Info</h2>
-                 <!-- ... content from previous version ... -->
+                 <p class="text-gray-400 mb-4" data-lang-key="performanceDesc">Lihat informasi performa dan data perangkat Anda yang terdeteksi oleh browser.</p>
+                 <div id="performanceData" class="text-gray-300 space-y-2"></div>
+                 <button id="refreshPerfBtn" class="btn mt-6" data-lang-key="refreshButton">Refresh Data</button>
             </div>
         </div>
 
@@ -189,32 +241,60 @@
             // --- Multi-language Dictionary ---
             const translations = {
                 id: {
-                    mainTitle: "LanaT Project v.1.2", subTitle: "Beta Pretest - All-in-One Web Tools",
+                    mainTitle: "LanaT Project v.1.3", subTitle: "Beta Pretest - All-in-One Web Tools",
                     backButton: "Kembali",
+                    soundMeterTitle: "Pengukur Suara", soundMeterDesc: "Izinkan akses mikrofon dan mulai monitoring untuk melihat level suara sekitar secara real-time.",
+                    soundLevelLabel: "Level Suara", startMonitoring: "Mulai Monitoring", stopMonitoring: "Hentikan Monitoring",
                     creatorTitle: "Pembuat File", creatorDesc: "Tulis kode Anda, beri nama file, pilih ekstensi, dan unduh langsung.",
                     fileContentLabel: "Isi File:", fileNameLabel: "Nama File:", fileExtLabel: "Ekstensi:", downloadButton: "Unduh File",
                     cameraTitle: "Filter Kamera", cameraAccessDesc: "Izinkan akses untuk membuka kamera dalam mode layar penuh dan menerapkan filter.",
                     cameraAccessButton: "Izinkan & Buka Kamera", filterNormal: "Normal", filterNegative: "Negatif", exitFullscreen: "Keluar",
-                    encoderTitle: "JS Encoder", qrTitle: "Generator QR", performanceTitle: "Info Performa",
+                    encoderTitle: "JS Encoder", encoderDesc: "Ubah kode JavaScript Anda menjadi format yang sulit dibaca untuk proteksi sederhana.",
+                    inputCode: "Kode Input:", inputPlaceholder: "// Tempel kode JavaScript Anda di sini...", outputCode: "Hasil Encode:",
+                    outputPlaceholder: "// Hasil encode akan muncul di sini...", encodeButton: "Convert", copyButton: "Salin Hasil",
+                    qrTitle: "Generator QR", qrDesc: "Buat kode QR dari teks atau URL situs web dengan mudah.",
+                    qrInputLabel: "Teks atau URL:", qrGenerateButton: "Buat QR", qrPlaceholder: "QR Code akan muncul di sini", qrDownloadButton: "Unduh QR",
+                    performanceTitle: "Info Performa", performanceDesc: "Lihat informasi performa dan data perangkat Anda yang terdeteksi oleh browser.",
+                    refreshButton: "Segarkan Data",
                 },
                 zh: {
-                    mainTitle: "LanaT 项目 v.1.2", subTitle: "预测试版 - 多功能网络工具",
+                    mainTitle: "LanaT 项目 v.1.3", subTitle: "预测试版 - 多功能网络工具",
                     backButton: "返回",
+                    soundMeterTitle: "声级计", soundMeterDesc: "允许麦克风访问并开始监控以实时查看环境声级。",
+                    soundLevelLabel: "声级", startMonitoring: "开始监控", stopMonitoring: "停止监控",
                     creatorTitle: "文件创建器", creatorDesc: "编写您的代码，命名文件，选择扩展名，然后直接下载。",
                     fileContentLabel: "文件内容:", fileNameLabel: "文件名:", fileExtLabel: "扩展名:", downloadButton: "下载文件",
                     cameraTitle: "相机滤镜", cameraAccessDesc: "允许访问以全屏模式打开相机并应用滤镜。",
                     cameraAccessButton: "允许并打开相机", filterNormal: "正常", filterNegative: "负片", exitFullscreen: "退出全屏",
-                    encoderTitle: "JS 编码器", qrTitle: "二维码生成器", performanceTitle: "性能信息",
+                    encoderTitle: "JS 编码器", encoderDesc: "将您的JavaScript代码转换为难以阅读的格式以进行简单保护。",
+                    inputCode: "输入代码:", inputPlaceholder: "// 在此处粘贴您的JavaScript代码...", outputCode: "编码结果:",
+                    outputPlaceholder: "// 编码输出将在此处显示...", encodeButton: "转换", copyButton: "复制结果",
+                    qrTitle: "二维码生成器", qrDesc: "轻松地从文本或网站URL创建二维码。",
+                    qrInputLabel: "文本或URL:", qrGenerateButton: "生成二维码", qrPlaceholder: "二维码将显示在此处", qrDownloadButton: "下载二维码",
+                    performanceTitle: "性能信息", performanceDesc: "查看浏览器检测到的您的设备性能信息和数据。",
+                    refreshButton: "刷新数据",
                 },
                 ru: {
-                    mainTitle: "Проект LanaT v.1.2", subTitle: "Бета-тестирование - универсальные веб-инструменты",
+                    mainTitle: "Проект LanaT v.1.3", subTitle: "Бета-тестирование - универсальные веб-инструменты",
                     backButton: "Назад",
+                    soundMeterTitle: "Измеритель уровня звука", soundMeterDesc: "Разрешите доступ к микрофону и начните мониторинг, чтобы видеть уровень окружающего звука в реальном времени.",
+                    soundLevelLabel: "Уровень звука", startMonitoring: "Начать мониторинг", stopMonitoring: "Остановить мониторинг",
                     creatorTitle: "Создатель файлов", creatorDesc: "Напишите свой код, назовите файл, выберите расширение и загрузите его напрямую.",
                     fileContentLabel: "Содержимое файла:", fileNameLabel: "Имя файла:", fileExtLabel: "Расширение:", downloadButton: "Скачать файл",
                     cameraTitle: "Фильтр камеры", cameraAccessDesc: "Разрешите доступ, чтобы открыть камеру в полноэкранном режиме и применить фильтры.",
-                    cameraAccessButton: "Разрешить и открыть камеру", filterNormal: "Обычный", filterNegative: "Негатив", exitFullscreen: "Выйти из полноэкранного режима",
+                    cameraAccessButton: "Разрешить и открыть камеру", filterNormal: "Обычный", filterNegative: "Негатив", exitFullscreen: "Выйти",
+                    encoderTitle: "JS-кодировщик", encoderDesc: "Преобразуйте ваш JavaScript-код в трудночитаемый формат для простой защиты.",
+                    inputCode: "Входной код:", inputPlaceholder: "// Вставьте ваш JavaScript-код сюда...", outputCode: "Результат:",
+                    outputPlaceholder: "// Результат кодирования появится здесь...", encodeButton: "Конвертировать", copyButton: "Копировать",
+                    qrTitle: "Генератор QR-кодов", qrDesc: "Легко создавайте QR-коды из текста или URL-адреса веб-сайта.",
+                    qrInputLabel: "Текст или URL:", qrGenerateButton: "Создать QR", qrPlaceholder: "QR-код появится здесь", qrDownloadButton: "Скачать QR",
+                    performanceTitle: "Информация о производительности", performanceDesc: "Просмотр информации о производительности и данных вашего устройства, обнаруженных браузером.",
+                    refreshButton: "Обновить",
                 }
             };
+
+            // --- Global Variables ---
+            let audioContext, analyser, microphoneStream, soundMeterRafId;
 
             // --- Element Selectors ---
             const langSelector = document.getElementById('language-selector');
@@ -222,6 +302,12 @@
             const menuCards = document.querySelectorAll('.main-menu-card');
             const backButtons = document.querySelectorAll('.back-button');
 
+            // Sound Meter elements
+            const startMicBtn = document.getElementById('start-mic-btn');
+            const stopMicBtn = document.getElementById('stop-mic-btn');
+            const soundLevelDb = document.getElementById('sound-level-db');
+            const soundLevelBar = document.getElementById('sound-level-bar');
+            
             // File Creator elements
             const downloadFileBtn = document.getElementById('downloadFileBtn');
             const fileContent = document.getElementById('fileContent');
@@ -236,124 +322,198 @@
             const filterNormalBtn = document.getElementById('filterNormalBtn');
             const filterNegativeBtn = document.getElementById('filterNegativeBtn');
             const exitFullscreenBtn = document.getElementById('exitFullscreenBtn');
-            const ctx = cameraFeed.getContext('2d');
-            let currentFilter = 'normal';
-            let animationFrameId;
+            const cameraCtx = cameraFeed.getContext('2d');
+            let currentFilter = 'normal', cameraRafId;
+            
+            // JS Encoder elements
+            const jsInput = document.getElementById('jsInput'), jsOutput = document.getElementById('jsOutput'),
+                  encodeBtn = document.getElementById('encodeBtn'), copyBtn = document.getElementById('copyBtn');
+
+            // QR Code elements
+            const qrInput = document.getElementById('qrInput'), generateQrBtn = document.getElementById('generateQrBtn'),
+                  qrcodeContainer = document.getElementById('qrcode-container'), downloadQrBtn = document.getElementById('downloadQrBtn');
+
+            // Performance elements
+            const performanceData = document.getElementById('performanceData'), refreshPerfBtn = document.getElementById('refreshPerfBtn');
+
 
             // --- Core Logic ---
 
             // 1. Page Navigation Logic
             function showPage(pageId) {
-                pages.forEach(page => {
-                    page.classList.remove('active');
-                });
-                const targetPage = document.getElementById(pageId);
-                if (targetPage) {
-                    targetPage.classList.add('active');
-                }
+                if (pageId !== 'page-sound-meter' && microphoneStream) stopSoundMeter();
+                pages.forEach(p => p.classList.remove('active'));
+                const target = document.getElementById(pageId);
+                if (target) target.classList.add('active');
             }
-
-            menuCards.forEach(card => {
-                card.addEventListener('click', () => {
-                    const pageId = card.getAttribute('data-target-page');
-                    showPage(pageId);
-                });
-            });
-
-            backButtons.forEach(button => {
-                button.addEventListener('click', () => showPage('page-home'));
-            });
+            menuCards.forEach(c => c.addEventListener('click', () => showPage(c.dataset.targetPage)));
+            backButtons.forEach(b => b.addEventListener('click', () => showPage('page-home')));
 
             // 2. Language Switcher Logic
             function setLanguage(lang) {
                 document.documentElement.lang = lang;
-                document.querySelectorAll('[data-lang-key]').forEach(element => {
-                    const key = element.getAttribute('data-lang-key');
+                document.querySelectorAll('[data-lang-key]').forEach(el => {
+                    const key = el.dataset.langKey;
                     if (translations[lang] && translations[lang][key]) {
-                        element.innerText = translations[lang][key];
+                        if (el.placeholder !== undefined) el.placeholder = translations[lang][key];
+                        else el.innerText = translations[lang][key];
                     }
                 });
+                if (document.getElementById('page-performance').classList.contains('active')) fetchPerformanceData();
             }
-
             langSelector.addEventListener('change', (e) => setLanguage(e.target.value));
 
-            // 3. File Creator Logic
-            downloadFileBtn.addEventListener('click', () => {
-                const content = fileContent.value;
-                const name = fileName.value.trim() || 'untitled';
-                const extension = fileExtension.value;
-                const filename = name + extension;
-                
-                let mimeType = 'text/plain';
-                if (extension === '.html') mimeType = 'text/html';
-                else if (extension === '.js') mimeType = 'text/javascript';
-                else if (extension === '.svg') mimeType = 'image/svg+xml';
-                else if (extension === '.zip') mimeType = 'application/zip';
+            // 3. Sound Level Meter Logic
+            function stopSoundMeter() {
+                if (microphoneStream) microphoneStream.getTracks().forEach(track => track.stop());
+                cancelAnimationFrame(soundMeterRafId);
+                microphoneStream = null;
+                startMicBtn.classList.remove('hidden');
+                stopMicBtn.classList.add('hidden');
+                soundLevelBar.style.width = '0%';
+                soundLevelDb.textContent = '0 dB';
+            }
 
-                const blob = new Blob([content], { type: mimeType });
+            startMicBtn.addEventListener('click', async () => {
+                try {
+                    microphoneStream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
+                    audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                    analyser = audioContext.createAnalyser();
+                    const source = audioContext.createMediaStreamSource(microphoneStream);
+                    source.connect(analyser);
+                    
+                    startMicBtn.classList.add('hidden');
+                    stopMicBtn.classList.remove('hidden');
+
+                    analyser.fftSize = 256;
+                    const bufferLength = analyser.frequencyBinCount;
+                    const dataArray = new Uint8Array(bufferLength);
+
+                    function updateSoundLevel() {
+                        analyser.getByteFrequencyData(dataArray);
+                        let sum = 0;
+                        for(const value of dataArray) sum += value;
+                        const average = sum / bufferLength;
+
+                        // Simple mapping to a "dB-like" scale. Not scientifically accurate but good for visualization.
+                        const db = Math.round((average / 128) * 100); 
+                        soundLevelDb.textContent = `${db} dB`;
+                        soundLevelBar.style.width = `${Math.min(db, 100)}%`;
+                        soundMeterRafId = requestAnimationFrame(updateSoundLevel);
+                    }
+                    updateSoundLevel();
+                } catch (err) {
+                    alert("Gagal mengakses mikrofon. Pastikan Anda memberikan izin.");
+                }
+            });
+            stopMicBtn.addEventListener('click', stopSoundMeter);
+            
+            // 4. File Creator Logic
+            downloadFileBtn.addEventListener('click', () => {
+                const content = fileContent.value, name = fileName.value.trim() || 'untitled', ext = fileExtension.value;
+                const mimeTypes = { '.html': 'text/html', '.js': 'text/javascript', '.svg': 'image/svg+xml', '.txt': 'text/plain' };
+                const blob = new Blob([content], { type: mimeTypes[ext] || 'application/octet-stream' });
                 const link = document.createElement('a');
                 link.href = URL.createObjectURL(blob);
-                link.download = filename;
+                link.download = name + ext;
                 link.click();
                 URL.revokeObjectURL(link.href);
             });
             
-            // 4. Camera & Fullscreen Logic
+            // 5. Camera & Fullscreen Logic
             accessCameraBtn.addEventListener('click', async () => {
                 try {
                     const stream = await navigator.mediaDevices.getUserMedia({ video: true });
                     videoFeed.srcObject = stream;
                     videoFeed.onloadedmetadata = () => {
                         cameraFullscreenContainer.classList.remove('hidden');
-                        cameraFullscreenContainer.requestFullscreen();
-                        
-                        // Wait for fullscreen to activate, then resize canvas
+                        document.documentElement.requestFullscreen();
                         setTimeout(() => {
                             cameraFeed.width = window.innerWidth;
                             cameraFeed.height = window.innerHeight;
                             drawFrame();
                         }, 500);
                     };
-                } catch (err) {
-                    alert("Gagal mengakses kamera. Pastikan Anda memberikan izin.");
-                }
+                } catch (err) { alert("Gagal mengakses kamera."); }
             });
-
             function drawFrame() {
-                ctx.drawImage(videoFeed, 0, 0, cameraFeed.width, cameraFeed.height);
+                cameraCtx.drawImage(videoFeed, 0, 0, cameraFeed.width, cameraFeed.height);
                 if (currentFilter === 'negative') {
-                    const imageData = ctx.getImageData(0, 0, cameraFeed.width, cameraFeed.height);
+                    const imageData = cameraCtx.getImageData(0, 0, cameraFeed.width, cameraFeed.height);
                     const data = imageData.data;
                     for (let i = 0; i < data.length; i += 4) {
-                        data[i] = 255 - data[i];     // r
-                        data[i + 1] = 255 - data[i + 1]; // g
-                        data[i + 2] = 255 - data[i + 2]; // b
+                        data[i] = 255 - data[i]; data[i+1] = 255 - data[i+1]; data[i+2] = 255 - data[i+2];
                     }
-                    ctx.putImageData(imageData, 0, 0);
+                    cameraCtx.putImageData(imageData, 0, 0);
                 }
-                animationFrameId = requestAnimationFrame(drawFrame);
+                cameraRafId = requestAnimationFrame(drawFrame);
             }
-
             filterNormalBtn.addEventListener('click', () => currentFilter = 'normal');
             filterNegativeBtn.addEventListener('click', () => currentFilter = 'negative');
             exitFullscreenBtn.addEventListener('click', () => document.exitFullscreen());
-
             document.addEventListener('fullscreenchange', () => {
                 if (!document.fullscreenElement) {
                     cameraFullscreenContainer.classList.add('hidden');
-                    cancelAnimationFrame(animationFrameId);
-                    if (videoFeed.srcObject) {
-                        videoFeed.srcObject.getTracks().forEach(track => track.stop());
-                    }
-                    showPage('page-camera-access'); // Go back to the access page
+                    cancelAnimationFrame(cameraRafId);
+                    if (videoFeed.srcObject) videoFeed.srcObject.getTracks().forEach(track => track.stop());
                 }
             });
 
+            // 6. JS Encoder Logic
+            encodeBtn.addEventListener('click', () => {
+                const rawCode = jsInput.value;
+                if (!rawCode) { jsOutput.value = 'Error: Input code cannot be empty.'; return; }
+                let encodedCode = '';
+                for (let i = 0; i < rawCode.length; i++) {
+                    encodedCode += '\\x' + ('00' + rawCode.charCodeAt(i).toString(16)).slice(-2);
+                }
+                jsOutput.value = `eval("${encodedCode}");`;
+            });
+            copyBtn.addEventListener('click', () => { jsOutput.select(); document.execCommand('copy'); });
+
+            // 7. QR Generator Logic
+            generateQrBtn.addEventListener('click', () => {
+                const text = qrInput.value.trim();
+                if (!text) return;
+                qrcodeContainer.innerHTML = '';
+                new QRCode(qrcodeContainer, { text, width: 200, height: 200 });
+                downloadQrBtn.classList.remove('hidden');
+            });
+            downloadQrBtn.addEventListener('click', () => {
+                const qrCanvas = qrcodeContainer.querySelector('canvas');
+                if (qrCanvas) {
+                    const link = document.createElement('a');
+                    link.download = 'qrcode.png'; link.href = qrCanvas.toDataURL('image/png'); link.click();
+                }
+            });
+
+            // 8. Performance Info Logic
+            function fetchPerformanceData() {
+                const lang = langSelector.value;
+                performanceData.innerHTML = '';
+                const keys = {
+                    id: ["Agen Pengguna", "Platform", "Bahasa", "Cookie Aktif", "Online", "RAM (Est.)", "Core CPU (Est.)"],
+                    zh: ["用户代理", "平台", "语言", "Cookie已启用", "在线", "内存 (估计)", "CPU核心数 (估计)"],
+                    ru: ["User Agent", "Платформа", "Язык", "Cookies вкл.", "Онлайн", "ОЗУ (прибл.)", "Ядра ЦП (прибл.)"],
+                };
+                const yesNo = { id: ["Tidak", "Ya"], zh: ["否", "是"], ru: ["Нет", "Да"] };
+                const info = [
+                    navigator.userAgent, navigator.platform, navigator.language,
+                    navigator.cookieEnabled ? yesNo[lang][1] : yesNo[lang][0],
+                    navigator.onLine ? yesNo[lang][1] : yesNo[lang][0],
+                    `${navigator.deviceMemory || 'N/A'} GB`, `${navigator.hardwareConcurrency || 'N/A'} Cores`
+                ];
+                keys[lang].forEach((key, i) => {
+                    const p = document.createElement('p');
+                    p.innerHTML = `<span class="font-semibold text-indigo-400">${key}:</span> ${info[i]}`;
+                    performanceData.appendChild(p);
+                });
+            }
+            refreshPerfBtn.addEventListener('click', fetchPerformanceData);
+
             // Initialize App
             setLanguage('id');
-            // NOTE: The content for Encoder, QR, and Performance pages needs to be moved
-            // from the previous version into their respective page divs.
-            // For brevity, I've left them as placeholders here but the structure is ready.
+            fetchPerformanceData(); // Initial load for performance page content
         });
     </script>
 </body>
