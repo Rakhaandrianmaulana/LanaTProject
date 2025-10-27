@@ -58,6 +58,7 @@ if (!isset($_SESSION['verified'])) {
 
 <!-- KONTEN WEBSITE ASLI KAMU DIMULAI DI SINI -->
 <!-- Copy-paste semua isi index.html kamu di bawah ini -->
+
 <!DOCTYPE html>
 <html lang="id">
 <head>
